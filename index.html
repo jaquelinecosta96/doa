@@ -878,4 +878,84 @@
                     <div class="card-info">
                         <div class="info-item">
                             <span class="info-icon">📍</span>
-                            <span class="info-text">${brecho.endereco}<br><strong>${
+                            <span class="info-text">${brecho.endereco}<br><strong>${brecho.cidade}</strong> - ${brecho.bairro}</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="info-icon">📞</span>
+                            <span class="info-text">${brecho.telefone}</span>
+                        </div>
+                        
+                        ${brecho.whatsapp ? `
+                            <div class="info-item">
+                                <span class="info-icon">💬</span>
+                                <span class="info-text">
+                                    <a href="https://wa.me/${brecho.whatsapp}" target="_blank" class="info-link">
+                                        Enviar WhatsApp
+                                    </a>
+                                </span>
+                            </div>
+                        ` : ''}
+                        
+                        ${brecho.site ? `
+                            <div class="info-item">
+                                <span class="info-icon">🌐</span>
+                                <span class="info-text">
+                                    <a href="${brecho.site}" target="_blank" class="info-link">
+                                        Visitar site
+                                    </a>
+                                </span>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="info-item">
+                            <span class="info-icon">👕</span>
+                            <span class="info-text">${brecho.tiposPecas}</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="info-icon">🎁</span>
+                            <span class="info-text"><strong>Doações:</strong> ${brecho.aceitaDoacao}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="schedule">
+                        <strong>🕐 Horários de Funcionamento:</strong>
+                        ${horariosHtml}
+                    </div>
+                    
+                    <div class="price-range">
+                        💰 R${brecho.precoMin} - R${brecho.precoMax}
+                    </div>
+                    
+                    <div class="card-tags">
+                        ${tagsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function searchBrechos(query) {
+            const searchTerm = query.toLowerCase().trim();
+            if (!searchTerm) return brechos;
+            return brechos.filter(brecho => {
+                return (
+                    brecho.nome.toLowerCase().includes(searchTerm) ||
+                    brecho.cidade.toLowerCase().includes(searchTerm) || 
+                    brecho.bairro.toLowerCase().includes(searchTerm) ||
+                    brecho.caracteristicas.some(c => c.toLowerCase().includes(searchTerm)) ||
+                    brecho.descricao.toLowerCase().includes(searchTerm)
+                );
+            });
+        }
+
+        function displayResults(results) {
+            const mapSection = document.getElementById('mapSection');
+            const resultsContent = document.getElementById('resultsContent');
+            const resultsCount = document.getElementById('resultsCount');
+            const cardsGrid = document.getElementById('cardsGrid');
+
+            mapSection.classList.add('show'); 
+            setTimeout(() => {
+                if (map) map.invalidateSize();
+            }, 50);
