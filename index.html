@@ -958,4 +958,185 @@
             mapSection.classList.add('show'); 
             setTimeout(() => {
                 if (map) map.invalidateSize();
-            }, 50);
+            }, 50); 
+
+            clearMarkers();
+            
+            if (results.length === 0) {
+                resultsContent.style.display = 'none';
+                return;
+            }
+            
+            results.forEach(brecho => addMarker(brecho));
+
+            if (results.length > 0 && map) { 
+                let allMarkers = [...markers];
+                if (userMarker) allMarkers.push(userMarker);
+                if (allMarkers.length > 0) {
+                    const group = L.featureGroup(allMarkers);
+                    map.fitBounds(group.getBounds().pad(0.1));
+                }
+            } 
+
+            resultsCount.textContent = `${results.length} ${results.length === 1 ? 'brechó encontrado' : 'brechós encontrados'}`;
+            cardsGrid.innerHTML = results.map(brecho => createCard(brecho)).join('');
+            resultsContent.style.display = 'block';
+
+            setTimeout(() => {
+                mapSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 200);
+        }
+
+        // Sistema de Login
+        const loginModal = document.getElementById('loginModal');
+        const loginBtn = document.getElementById('loginBtn');
+        const closeModal = document.getElementById('closeModal');
+        const loginForm = document.getElementById('loginForm');
+        const dashboard = document.getElementById('dashboard');
+        const searchContainer = document.getElementById('searchContainer');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        loginBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginModal.classList.add('show');
+        });
+
+        closeModal.addEventListener('click', () => {
+            loginModal.classList.remove('show');
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === loginModal) {
+                loginModal.classList.remove('show');
+            }
+        });
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const brecho = brechos.find(b => b.email === email && b.senha === password);
+            
+            if (brecho) {
+                currentUser = brecho;
+                loginModal.classList.remove('show');
+                searchContainer.style.display = 'none';
+                resultsContainer.style.display = 'none';
+                document.getElementById('mapSection').style.display = 'none';
+                dashboard.classList.add('show');
+                document.getElementById('brechoName').textContent = brecho.nome;
+                loadImages();
+            } else {
+                alert('Email ou senha incorretos!');
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            currentUser = null;
+            dashboard.classList.remove('show');
+            searchContainer.style.display = 'block';
+            resultsContainer.style.display = 'block';
+            loginForm.reset();
+            displayResults(brechos);
+        });
+
+        // Sistema de Upload
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewGrid = document.getElementById('previewGrid');
+
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            if (!currentUser) return;
+
+            Array.from(files).forEach(file => {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`Arquivo ${file.name} é muito grande (máx. 5MB)`);
+                    return;
+                }
+
+                if (!file.type.startsWith('image/')) {
+                    alert(`Arquivo ${file.name} não é uma imagem válida`);
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageUrl = e.target.result;
+                    currentUser.imagens.push(imageUrl);
+                    loadImages();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function loadImages() {
+            if (!currentUser) return;
+
+            previewGrid.innerHTML = currentUser.imagens.map((img, index) => `
+                <div class="preview-item">
+                    <img src="${img}" alt="Roupa ${index + 1}">
+                    <button class="remove-img" data-index="${index}">×</button>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.remove-img').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    currentUser.imagens.splice(index, 1);
+                    loadImages();
+                });
+            });
+        }
+
+        // Event listeners de busca
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            const query = document.getElementById('searchInput').value;
+            const results = searchBrechos(query);
+            displayResults(results);
+        });
+
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const query = this.value;
+                const results = searchBrechos(query);
+                displayResults(results);
+            }
+        });
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeLeafletMap();
+            displayResults(brechos);
+        });
+    </script>
+</body>
+</html>
+           
+     
+        
